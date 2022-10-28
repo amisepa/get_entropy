@@ -42,7 +42,7 @@ end
 
 %% 1st GUI to select channels and type of entropy
 
-if nargin == 1
+if nargin < 2
     eTypes = {'Approximate entropy' 'Sample entropy' 'Fuzzy entropy' 'Multiscale entropy' 'Multiscale fuzzy entropy' 'Refined composite multiscale fuzzy entropy (default)'};
     uigeom = { [.5 .9] .5 [.5 .4 .2] .5 [.5 .1] .5 [.5 .1] };
     uilist = {
@@ -62,20 +62,34 @@ if nargin == 1
             };
     param = inputgui(uigeom,uilist,'pophelp(''pop_entropy'')','entropy EEGLAB plugin',EEG);
     entropyType = eTypes{param{1}};
-    if ~isempty(param{2})
-        chanlist = split(param{2});
-    else
-        chanlist = {EEG.chanlocs.labels}';
-    end
+    chanlist = split(param{2});
     tau  = str2double(param{3});
     m = str2double(param{4});
 
 end
 
+if nargin < 3
+    if ~exist('chanlist','var') || isempty(chanlist)
+        disp('No channels were selected: selecting all channels.')
+        chanlist = {EEG.chanlocs.labels}';
+    end
+    if ~exist('entropyType','var') || isempty(entropyType)
+        disp('No entropy type selected: selecting Refined composite multiscale fuzzy entropy (default).')
+        entropyType = 'Refined composite multiscale fuzzy entropy (default)';
+    end
+    if ~exist('tau','var') || isempty(tau)
+        disp('No time lag selected: selecting tau = 1 (default).')
+        tau = 1;
+    end
+    if ~exist('m','var') || isempty(m)
+        disp('No embedding dimension selected: selecting m = 2 (default).')
+        m = 2;
+    end
+end
 
 %% 2nd GUI to select additional parameters
 
-if nargin == 1 && contains(entropyType, 'Multiscale')
+if nargin < 5 && contains(entropyType, 'Multiscale')
     cTypes = {'Mean' 'Standard deviation (default)' 'Variance'};
     uigeom = { [.5 .4] .5 .5 };
     uilist = {
@@ -88,36 +102,7 @@ if nargin == 1 && contains(entropyType, 'Multiscale')
     coarseType = cTypes{param{1}};
     filter = logical(param{2});
 end
-
-%% 3rd GUI for fuzzy power
-
-if nargin == 1 && contains(entropyType, 'Fuzzy')
-    uigeom = { [.9 .3] };
-    uilist = { {'style' 'text' 'string' 'Fuzzy power:' } ...
-        {'style' 'edit' 'string' '2' 'tag' 'n'}  };
-    param = inputgui(uigeom,uilist,'pophelp(''pop_entropy'')','entropy EEGLAB plugin',EEG);
-    n = str2double(param{1});
-end
-
-%% Defaults if something was missed in command line
-
-if ~exist('chanlist','var') || isempty(chanlist)
-    disp('No channels were selected: selecting all channels (default)')
-    chanlist = {EEG.chanlocs.labels}';
-end
-if ~exist('entropyType','var') || isempty(entropyType)
-    disp('No entropy type selected: selecting Refined composite multiscale fuzzy entropy (default)')
-    entropyType = 'Refined composite multiscale fuzzy entropy (default)';
-end
-if ~exist('tau','var') || isempty(tau)
-    disp('No time lag selected: selecting tau = 1 (default).')
-    tau = 1;
-end
-if ~exist('m','var') || isempty(m)
-    disp('No embedding dimension selected: selecting m = 2 (default).')
-    m = 2;
-end
-if contains(entropyType, 'Multiscale') && nargin > 4 && nargin < 6
+if contains(entropyType, 'Multiscale') && nargin > 5
     if ~exist('coarseType','var') || isempty(coarseType)
         disp('No coarse graining method selected: selecting standard deviation (default).')
         coarseType = 'Standard deviation';
@@ -126,6 +111,16 @@ if contains(entropyType, 'Multiscale') && nargin > 4 && nargin < 6
         disp('Selecting bandpass filtering at each time scale to control for the spectral bias (default).')
         filtData = true;
     end
+end
+
+%% 3rd GUI for fuzzy power
+
+if nargin < 5 && contains(entropyType, 'fuzzy')
+    uigeom = { [.9 .3] };
+    uilist = { {'style' 'text' 'string' 'Fuzzy power:'} ...
+        {'style' 'edit' 'string' '2' 'tag' 'n'}  };
+    param = inputgui(uigeom,uilist,'pophelp(''pop_entropy'')','entropy EEGLAB plugin',EEG);
+    n = str2double(param{1});
 end
 if contains(entropyType, 'fuzzy') 
     if ~exist('n','var') || isempty(n)
@@ -177,6 +172,7 @@ switch entropyType
         for ichan = 1:nchan
             [fe(ichan,:), p(ichan,:)] = fuzzy_entropy(EEG.data(ichan,:),m,r,n,tau);
             fprintf('   %s: %6.3f \n', EEG.chanlocs(ichan).labels, fe(ichan,:))
+
         end
 
 
