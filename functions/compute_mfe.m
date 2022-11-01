@@ -1,4 +1,4 @@
-%% Computes multiscale entropy (MSE)
+%% Computes multiscale fuzzy entropy (MFE)
 %
 % INPUTS:
 %   signal: univariate signal - a vector of size 1 x N (the number of sample points)
@@ -11,24 +11,20 @@
 %   filtData: bandpass filter each scale factor to control for spectral 
 %       bias (1) or not (0; default)
 %   fs: sample rate (Hz)
+%   n: fuzzy power
 %
 % OUTPUTS:
-%   mse: entropy values for each scale factor
+%   mfe: entropy values for each scale factor
 %   scales: lower and upper frequency bounds of each time scale
-%
-% EXAMPLE:
-%   [mse, scales] = compute_mse(signal, m, r, tau, coarseType, nScales, filtData, fs)
 % 
 % Ref:
 %   [1] H. Azami and J. Escudero, "Refined Multiscale Fuzzy Entropy based on
 %   Standard Deviation for Biomedical Signal Analysis", Medical & Biological
 %   Engineering & Computing, 2016.
-%   [2] M. Costa, A. Goldberger, and C.K. Peng, "Multiscale Entropy Analysis
-%   of Complex Physiologic Time Series", Physical review letters, vol. 89, no. 6, p. 068102, 2002.
 %
 % Cedric Cannard, 2022
 
-function [mse, scales] = compute_mse(signal, m, r, tau, coarseType, nScales, filtData, fs)
+function [mfe, scales] = compute_mfe(signal, m, r, tau, coarseType, nScales, filtData, fs, n)
 
 % Max scale factor cannot be greater than Nyquist frequency
 nf = fs/2;
@@ -36,7 +32,7 @@ if nScales >= nf
     warning(["Scale factor cannot be as high as the Nyquist frequency. Lowering it to " num2str(nf-1) ]);
 end
 
-% Signal is centered and normalized to have SD = 1
+% Signal is centered and normalised to standard deviation 1
 signal = signal-mean(signal);
 signal = signal./std(signal);
 
@@ -45,17 +41,16 @@ if contains(lower(coarseType), 'standard')
     coarseType = 'SD';
 end
 
-mse = nan(1,nScales);
+mfe = nan(1,nScales);
 scales = nan(2,nScales);
 parfor iScale = 1:nScales
     
-    % Make copy of signal in case it is bandpass-filtered at each scale
+    % make copy of signal in case it is bandpass-filtered at each scale
     sig = signal;
     
-    % Scale factor bounds
+    % scale factor bounds
     upperBound = (1/iScale).*nf + .05*((1./iScale).*nf);
     lowerBound = (1/(iScale+1)).*nf - .05*((1./(iScale+1)).*nf);
-
     % Display the corresponding frequencies for this scale
     scales(:,iScale) = [round(lowerBound,3) round(upperBound,3) ];
     disp(['scale ' num2str(iScale) ': ' num2str(round(lowerBound,3)) ' - ' num2str(round(upperBound,3)) ' Hz']);
@@ -86,37 +81,22 @@ parfor iScale = 1:nScales
 %         % Visualize filter effect on the power spectrum
 %         [psd,f] = pwelch(sig,[],[],[],fs);
 %         plot(f,psd); hold on;
-%         title(num2str(iScale)); legend([num2str(lowerBound) '-' num2str(upperBound)]);
+%         title(num2str(iScale)); legend([num2str(lowcutoff) '-' num2str(highcutoff)]);
 
     end
 
     y = reshape(sig(1:floor(length(sig)/iScale)*iScale),iScale,[]);
 
     switch coarseType
-
         case 'Mean'
-%             disp('Selected coarse-graining method: Mean')
-%             y = reshape(sig(1:floor(length(sig)/iScale)*iScale),iScale,[]);
             sig = mean(y,'omitnan');
-%             mse(:,iScale) = compute_se(sig, m, r, tau);
-
         case 'SD'
-
-%             disp('Selected coarse-graining method: Standard deviation')
-%             y = reshape(sig(1:floor(length(sig)/iScale)*iScale),iScale,[]);
             sig = std(y,'omitnan');
-%             mse(:,iScale) = compute_se(sig, m, r, tau);
-
         case 'Variance'
-
-%             disp('Selected coarse-graining method: Variance')
-%             y = reshape(sig(1:floor(length(sig)/iScale)*iScale),iScale,[]);
             sig = var(y,'omitnan');
-%             mse(:,iScale) = compute_se(sig, m, r, tau);
-
     end
 
-    mse(:,iScale) = compute_se(sig, m, r, tau);
+    mfe(:,iScale) = compute_fe(sig, m, r, n, tau);
 
 end
 
