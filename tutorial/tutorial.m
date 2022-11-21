@@ -1,7 +1,10 @@
 %% Brief tutorial on how to use the get_entropy() EEGLAB plugin
 
+clear; close all; clc
+
 % launch eeglab
 eeglab
+pop_editoptions('option_parallel', 1); % turn parrallel computing on (1) or off (0)
 
 % if you haven'installed the plugin yet, either go to File > Manage EEGLAB
 % extensions > search get_entropy > Install
@@ -9,27 +12,43 @@ eeglab
 % or clone the github directory in the EEGLAB plugins folder
 % or donwload the github repo and unzip it in the EEGLAB plugins folder
 
-% Load sample EEG data (4-channel wearable EEG data)
+% Load provided sample EEG data from the tutorial directory 
+% (several minutes of mind wandering, 64-channel Biosemi):
 pluginPath = fileparts(which('eegplugin_entropy.m'));
-EEG = pop_loadset('filename','sample_data1.set','filepath',fullfile(pluginPath,'tutorial'));
+EEG = pop_loadset('filename','sample_data_clean.set','filepath',fullfile(pluginPath,'tutorial'));
+EEG = pop_resample(EEG, 128); % downsample to 128 Hz to increase speed
 
-% downsample to 128 Hz to save time for tuto
-EEG = pop_resample(EEG, 128);
-
-% Use GUI to selec all parameters manually
-entropy = get_entropy(EEG);
+% Launch GUI to selec all parameters manually
+EEG = get_entropy(EEG);  % or Tools > Compute entropy
 
 % Compute Fuzzy entropy with command line using default parameters
-entropy = get_entropy(EEG,'Fuzzy entropy');
+disp('-------- Fuzzy entropy ------------')
+t = tic;
+EEG = get_entropy(EEG,'Fuzzy entropy');
+toc(t)
 
 % same but only on TP channels and using variance instead of default sd
-entropy = get_entropy(EEG,'Fuzzy entropy',{'TP9' 'TP10'},[],[],'Variance');
+% EEG = get_entropy(EEG,'Fuzzy entropy',{'TP9' 'TP10'},[],[],'Variance');
 
 % Multiscale fuzzy entropy with default parameters, and add the 'scales' output to
 % see the frequency bounds of each scale factor
-[entropy, scales] = get_entropy(EEG,'Multiscale fuzzy entropy');
+disp('-------- Multiscale fuzzy entropy ------------')
+t = tic;
+EEG = get_entropy(EEG,'Multiscale fuzzy entropy');
+EEG.scales
+toc(t)
 
 % same but only 15 time scales and turning off plotting (if
-[entropy, scales] = get_entropy(EEG,'Multiscale fuzzy entropy',[],[],[],[],15,[],[],1);
+[EEG, scales] = get_entropy(EEG,'Multiscale fuzzy entropy',[],[],[],[],15,[],[],1);
 
 % [~, ~, ~,MSE_sd_filt,~,scales] = get_entropy(EEG, 'Multiscale entropy', {EEG.chanlocs.labels}, 1, 2, 'Standard deviation',15,1,[],1);
+
+
+% EEG = get_entropy(EEG);   % GUI mode
+% EEG = get_entropy(EEG,'Approximate entropy');
+% EEG = get_entropy(EEG,'Sample entropy');
+EEG = get_entropy(EEG,'Fuzzy entropy',{'Cz'});
+% EEG = get_entropy(EEG,'Multiscale entropy', {'Cz' 'O1' 'Fz'}, [],[],[],30);
+% EEG = get_entropy(EEG,'Multiscale fuzzy entropy', {'Cz' 'O1' 'Fz'}, [],[],[],30);
+% EEG = get_entropy(EEG, 'Sample entropy',[], 1, 2, 'Mean', 1, 2);
+% EEG = get_entropy(EEG, 'Multiscale entropy', {EEG.chanlocs.labels}, 1, 2, 'Standard deviation',15,1,[],1);
