@@ -3,7 +3,7 @@
 clear; close all; clc
 
 % launch eeglab
-eeglab
+eeglab; close;
 pop_editoptions('option_parallel', 1); % turn parrallel computing on (1) or off (0)
 
 % if you haven'installed the plugin yet, either go to File > Manage EEGLAB
@@ -16,7 +16,8 @@ pop_editoptions('option_parallel', 1); % turn parrallel computing on (1) or off 
 % (several minutes of mind wandering, 64-channel Biosemi):
 pluginPath = fileparts(which('eegplugin_entropy.m'));
 EEG = pop_loadset('filename','sample_data_clean.set','filepath',fullfile(pluginPath,'tutorial'));
-EEG = pop_resample(EEG, 128); % downsample to 128 Hz to increase speed
+% EEG = pop_resample(EEG, 128); % downsample to 128 Hz to increase speed
+% EEG = pop_select(EEG, 'point', [1 23041]);
 
 % Launch GUI to selec all parameters manually
 EEG = get_entropy(EEG);  % or Tools > Compute entropy
@@ -38,17 +39,22 @@ EEG = get_entropy(EEG,'Multiscale fuzzy entropy');
 EEG.scales
 toc(t)
 
-% same but only 15 time scales and turning off plotting (if
-[EEG, scales] = get_entropy(EEG,'Multiscale fuzzy entropy',[],[],[],[],15,[],[],1);
+% same but only 10 time scales and turning off plotting
+EEG = get_entropy(EEG,'Multiscale fuzzy entropy',[],[],[],[],10,[],[],false);
 
-% [~, ~, ~,MSE_sd_filt,~,scales] = get_entropy(EEG, 'Multiscale entropy', {EEG.chanlocs.labels}, 1, 2, 'Standard deviation',15,1,[],1);
+% same but only on channels F3 and F4 (and plotting On)
+EEG = get_entropy(EEG,'Multiscale fuzzy entropy',{'F3' 'F4'},[],[],[],10,[],[],true,false);
 
+% Same but using bandpass filtering at each time scale to control for
+% spectral contamination (and plotting On)
+EEG = get_entropy(EEG,'Multiscale fuzzy entropy',{'F3' 'F4'},[],[],[],10,true,[],true);
 
 % EEG = get_entropy(EEG);   % GUI mode
 % EEG = get_entropy(EEG,'Approximate entropy');
 % EEG = get_entropy(EEG,'Sample entropy');
-EEG = get_entropy(EEG,'Fuzzy entropy',{'Cz'});
+% EEG = get_entropy(EEG,'Fuzzy entropy',{'Cz'});
 % EEG = get_entropy(EEG,'Multiscale entropy', {'Cz' 'O1' 'Fz'}, [],[],[],30);
 % EEG = get_entropy(EEG,'Multiscale fuzzy entropy', {'Cz' 'O1' 'Fz'}, [],[],[],30);
 % EEG = get_entropy(EEG, 'Sample entropy',[], 1, 2, 'Mean', 1, 2);
 % EEG = get_entropy(EEG, 'Multiscale entropy', {EEG.chanlocs.labels}, 1, 2, 'Standard deviation',15,1,[],1);
+
