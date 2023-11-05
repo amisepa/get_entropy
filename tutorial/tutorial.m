@@ -18,6 +18,7 @@ pluginPath = fileparts(which('eegplugin_entropy.m'));
 EEG = pop_loadset('filename','sample_data_clean.set','filepath',fullfile(pluginPath,'tutorial'));
 % EEG = pop_resample(EEG, 128); % downsample to 128 Hz to increase speed
 % EEG = pop_select(EEG, 'point', [1 23041]);
+EEG = ref_infinity(EEG);
 
 % Launch GUI to selec all parameters manually
 EEG = get_entropy(EEG);  % or Tools > Compute entropy
@@ -28,19 +29,19 @@ t = tic;
 EEG = get_entropy(EEG,'Fuzzy entropy');
 toc(t)
 
+% If you forgot to plot outputs and want to see, you can call the function
+% like this: 
+plot_entropy(EEG.entropy, EEG.chanlocs, 1:EEG.nbchan)
+
 % same but only on TP channels and using variance instead of default sd
 % EEG = get_entropy(EEG,'Fuzzy entropy',{'TP9' 'TP10'},[],[],'Variance');
 
 % Multiscale fuzzy entropy with default parameters, and add the 'scales' output to
 % see the frequency bounds of each scale factor
-disp('-------- Multiscale fuzzy entropy ------------')
-t = tic;
-EEG = get_entropy(EEG,'Multiscale fuzzy entropy');
-EEG.scales
-toc(t)
-
+ 
 % same but only 10 time scales and turning off plotting
-EEG = get_entropy(EEG,'Multiscale fuzzy entropy',[],[],[],[],10,[],[],false);
+% EEG = get_entropy(EEG,'Multiscale fuzzy entropy',[],[],[],[],10,[],[],false);
+EEG = get_entropy(EEG,'Multiscale fuzzy entropy',[],[],[],[],50,[],[],false);
 
 % same but only on channels F3 and F4 (and plotting On)
 EEG = get_entropy(EEG,'Multiscale fuzzy entropy',{'F3' 'F4'},[],[],[],10,[],[],true,false);
