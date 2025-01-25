@@ -278,8 +278,7 @@ switch entropyType
         progressbar('Channels')
         for ichan = 1:nchan
             % fprintf('Channel %d \n', ichan)
-            % [entropy(ichan,:),te] = pentropy( zscore(EEG.data(chanIdx(ichan),:)), EEG.srate);
-            [entropy(ichan,:), std] = fractal_volatility(zscore(EEG.data(chanIdx(ichan),:)));
+            [entropy(ichan,:),te] = pentropy( zscore(EEG.data(chanIdx(ichan),:)), EEG.srate);
 
             fprintf('   %s: %6.3f \n', EEG.chanlocs(ichan).labels, entropy(ichan,:))
             progressbar(ichan/nchan)
