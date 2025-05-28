@@ -1,4 +1,5 @@
-%% Brief tutorial on how to use the get_entropy() EEGLAB plugin
+%% Brief tutorial on how to use the ASCENT EEGLAB plugin.
+
 
 clear; close all; clc
 
@@ -14,20 +15,21 @@ eeglab; close;
 
 % Load provided sample EEG data from the tutorial directory 
 % (several minutes of mind wandering, 64-channel Biosemi):
-pluginPath = fileparts(which('eegplugin_entropy.m'));
+pluginPath = fileparts(which('eegplugin_Ascent.m'));
+cd(pluginPath)
 EEG = pop_loadset('filename','sample_data_clean.set','filepath',fullfile(pluginPath,'tutorial'));
 % EEG = pop_resample(EEG, 128); % downsample to 128 Hz to increase speed
 % EEG = pop_select(EEG, 'point', [1 23041]);
 % EEG = ref_infinity(EEG);
 
 % Launch GUI to selec all parameters manually
-EEG = get_entropy(EEG);  % or Tools > Compute entropy
+EEG = ascent_compute(EEG);  % or Tools > Compute entropy
 
-% Compute Fuzzy entropy with command line using default parameters
-disp('-------- Fuzzy entropy ------------')
+% Compute Approximate entropy with command line using default parameters
 t = tic;
-EEG = get_entropy(EEG,'Fuzzy entropy');
+EEG = ascent_compute(EEG,'Fuzzy entropy');
 toc(t)
+print(gcf, 'fuzzEn_topo.png','-dpng','-r300');   % 300 dpi .png
 
 % If you forgot to plot outputs and want to see, you can call the function
 % like this: 
